@@ -7,17 +7,13 @@ You are an API backend. Respond ONLY with JSON.
 
 Give five Norwegian A1/A2-level vocabulary words ${
     theme ? `related to "${theme}"` : 'on common everyday topics'
-  }, formatted exactly like this:
-
+  }, formatted as:
 [
   { "no": "hund", "en": "dog" },
   { "no": "katt", "en": "cat" },
-  { "no": "hus", "en": "house" },
-  { "no": "vann", "en": "water" },
-  { "no": "bil", "en": "car" }
+  ...
 ]
-
-Do not return any explanation or formatting. Only JSON. Strict format.
+No preamble. No explanation. No markdown. Only valid JSON.
 `.trim();
 
   const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -29,23 +25,17 @@ Do not return any explanation or formatting. Only JSON. Strict format.
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.4
+      temperature: 0.3
     })
   });
 
   const data = await openaiRes.json();
-  const content = data.choices?.[0]?.message?.content ?? '[]';
+  const content = data.choices?.[0]?.message?.content ?? '';
 
-  let words;
-  try {
-    words = JSON.parse(content);
-  } catch (err) {
-    console.error("❌ Failed to parse OpenAI response:", content);
-    words = [];
-  }
+  console.log("🔎 RAW RESPONSE FROM OPENAI:\n" + content); // will show in Netlify function logs
 
-  return new Response(JSON.stringify(words), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
+  return new Response(
+    JSON.stringify({ raw: content }), // don’t parse
+    { status: 200, headers: { 'Content-Type': 'application/json' } }
+  );
 };
