@@ -11,22 +11,24 @@ export default async (req, context) => {
     });
   }
 
-  const prompt = `
-You are an API backend. Return only valid JSON.
+const prompt = `
+You are an API backend. Respond ONLY with valid JSON.
 
-Generate five distinct vocabulary words in ${tl} ${
-    theme ? `related to the topic "${theme}"` : "on general everyday topics"
-  }. For each word, give the correct translation in ${l1}.
+Give five *distinct* everyday vocabulary words in ${tl} related to the theme \"${
+  theme || 'general topics'
+}\" — such as specific objects or examples (e.g., if the theme is \"animals\", return words like \"dog\", \"cat\", etc.).
+
+Translate each word into ${l1}.
 
 Format exactly as:
-
 [
   { "tl": "<word in ${tl}>", "l1": "<translation in ${l1}>" },
   ...
 ]
 
-Only return strict JSON. Do not use markdown, do not explain. Just the array.
-  `.trim();
+Do NOT explain anything. Do NOT include markdown. Return only strict JSON.
+`.trim();
+
 
   const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
