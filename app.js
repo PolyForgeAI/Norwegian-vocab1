@@ -7,6 +7,10 @@ const tlSelect     = document.getElementById('tl');
 
 let seen = new Set();
 
+function showError(message) {
+  btnContainer.innerHTML = `<p style="color:red; font-size:1rem;">⚠️ ${message}</p>`;
+}
+
 async function fetchWords(theme = '', l1 = '', tl = '') {
   if (!l1 || !tl || l1 === tl) return [];
 
@@ -52,6 +56,17 @@ async function populate() {
   const theme = themeInput.value.trim();
   const l1    = l1Select.value.trim();
   const tl    = tlSelect.value.trim();
+
+  if (!l1 || !tl) {
+    showError("Please select both L1 (Native) and TL (Target) languages.");
+    return;
+  }
+
+  if (l1 === tl) {
+    showError("L1 and TL must be different. Please choose two different languages.");
+    return;
+  }
+
   const words = await fetchWords(theme, l1, tl);
   render(words);
 }
