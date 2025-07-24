@@ -2,12 +2,18 @@ export default async (req, context) => {
   const theme = (context.params?.query?.theme || '').trim();
 
   const prompt = `
-    Provide exactly five distinct Norwegian A1/A2 words ${
-      theme ? `related to "${theme}"` : 'on random everyday topics'
-    }.
-    Return strict JSON array:
-      [{ "no": "<Norwegian>", "en": "<English>" }, ...]
-  `.trim();
+You are an API backend. Respond ONLY with JSON.
+
+Give five Norwegian A1/A2-level vocabulary words ${
+    theme ? `related to "${theme}"` : 'on common topics'
+  }, formatted as a strict JSON array:
+[
+  { "no": "hund", "en": "dog" },
+  { "no": "katt", "en": "cat" },
+  ...
+]
+Do NOT include any explanation or extra text — just return valid JSON.
+`.trim();
 
   const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -18,7 +24,7 @@ export default async (req, context) => {
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.6
+      temperature: 0.4
     })
   });
 
@@ -27,11 +33,13 @@ export default async (req, context) => {
 
   let words;
   try { words = JSON.parse(content); }
-  catch { words = []; }
+  catch {
+    console.error("❌ Failed to parse OpenAI response:", content);
+    words = [];
+  }
 
   return new Response(JSON.stringify(words), {
     status: 200,
     headers: { 'Content-Type': 'application/json' }
   });
 };
-
