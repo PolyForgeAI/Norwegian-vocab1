@@ -13,6 +13,12 @@ async function fetchWords(theme = '') {
 
 function render(words) {
   btnContainer.innerHTML = '';
+
+  if (!words || words.length === 0) {
+    btnContainer.innerHTML = '<p style="color:red; font-size:1rem;">⚠️ No words found. Try a different theme.</p>';
+    return;
+  }
+
   words.forEach(({ no, en }) => {
     const btn = document.createElement('button');
     btn.className = 'word';
