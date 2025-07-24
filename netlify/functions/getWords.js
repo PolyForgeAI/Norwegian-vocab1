@@ -1,24 +1,32 @@
 export default async (req, context) => {
-  const url = new URL(req.url);
-  const theme = (url.searchParams.get("theme") || '').trim();
+  const url   = new URL(req.url);
+  const theme = (url.searchParams.get("theme") || "").trim();
+  const l1    = (url.searchParams.get("l1") || "").trim();
+  const tl    = (url.searchParams.get("tl") || "").trim();
+
+  if (!l1 || !tl || l1 === tl) {
+    return new Response(JSON.stringify([]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
   const prompt = `
-You are an API backend. Respond ONLY with valid JSON.
+You are an API backend. Return only valid JSON.
 
-Give five Norwegian A1/A2 vocabulary words ${
-    theme ? `related to "${theme}"` : 'on everyday topics'
-  } in this format:
+Generate five distinct vocabulary words in ${tl} ${
+    theme ? `related to the topic "${theme}"` : "on general everyday topics"
+  }. For each word, give the correct translation in ${l1}.
+
+Format exactly as:
 
 [
-  { "no": "hund", "en": "dog" },
-  { "no": "katt", "en": "cat" },
-  { "no": "hest", "en": "horse" },
-  { "no": "fugl", "en": "bird" },
-  { "no": "fisk", "en": "fish" }
+  { "tl": "<word in ${tl}>", "l1": "<translation in ${l1}>" },
+  ...
 ]
 
-NO explanation. NO markdown. ONLY JSON.
-`.trim();
+Only return strict JSON. Do not use markdown, do not explain. Just the array.
+  `.trim();
 
   const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -29,21 +37,21 @@ NO explanation. NO markdown. ONLY JSON.
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3
+      temperature: 0.4
     })
   });
 
   const data = await openaiRes.json();
   let content = data.choices?.[0]?.message?.content ?? '';
 
-  // 🧽 Clean: remove markdown wrapper if present
-  content = content.trim().replace(/^```json\s*|\s*```$/g, '');
+  // 🧼 Strip markdown if wrapped
+  content = content.trim().replace(/^```json\\s*|\\s*```$/g, '');
 
   let words;
   try {
     words = JSON.parse(content);
   } catch (err) {
-    console.error("❌ Failed to parse cleaned content:\n", content);
+    console.error('❌ Parse failed. Raw content:', content);
     words = [];
   }
 
