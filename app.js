@@ -71,4 +71,8 @@ async function populate() {
   render(words);
 }
 
-refreshBtn.addEventListener('click', populate);
+refreshBtn.addEventListener('click', () => {
+  seen.clear();         // 🧽 reset word cache for each request
+  populate();           // 🧠 fetch words based on current input
+});
+
