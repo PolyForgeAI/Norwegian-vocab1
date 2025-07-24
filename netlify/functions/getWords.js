@@ -1,18 +1,23 @@
 export default async (req, context) => {
-  const theme = (context.params?.query?.theme || '').trim();
+  const url = new URL(req.url);
+  const theme = (url.searchParams.get("theme") || '').trim();
 
   const prompt = `
 You are an API backend. Respond ONLY with JSON.
 
 Give five Norwegian A1/A2-level vocabulary words ${
-    theme ? `related to "${theme}"` : 'on common topics'
-  }, formatted as a strict JSON array:
+    theme ? `related to "${theme}"` : 'on common everyday topics'
+  }, formatted exactly like this:
+
 [
   { "no": "hund", "en": "dog" },
   { "no": "katt", "en": "cat" },
-  ...
+  { "no": "hus", "en": "house" },
+  { "no": "vann", "en": "water" },
+  { "no": "bil", "en": "car" }
 ]
-Do NOT include any explanation or extra text — just return valid JSON.
+
+Do not return any explanation or formatting. Only JSON. Strict format.
 `.trim();
 
   const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -28,12 +33,13 @@ Do NOT include any explanation or extra text — just return valid JSON.
     })
   });
 
-  const data    = await openaiRes.json();
+  const data = await openaiRes.json();
   const content = data.choices?.[0]?.message?.content ?? '[]';
 
   let words;
-  try { words = JSON.parse(content); }
-  catch {
+  try {
+    words = JSON.parse(content);
+  } catch (err) {
     console.error("❌ Failed to parse OpenAI response:", content);
     words = [];
   }
